@@ -3,8 +3,9 @@ package ua.kiev.prog.shared;
 public class Client {
     @Id
     private int id;
-
+    @Column (realName = "client_name")
     private String name;
+
     private int age;
 
     public Client() {

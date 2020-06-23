@@ -20,7 +20,7 @@ public class ClientDAOImpl implements ClientDAO {
             Statement st = conn.createStatement();
             try {
                 st.execute("DROP TABLE IF EXISTS Clients");
-                st.execute("CREATE TABLE Clients (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20) NOT NULL, age INT)");
+                st.execute("CREATE TABLE Clients (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, client_name VARCHAR(20) NOT NULL, age INT)");
             } finally {
                 st.close();
             }
@@ -33,7 +33,7 @@ public class ClientDAOImpl implements ClientDAO {
     public void addClient(String name, int age) {
         try {
             try (PreparedStatement st = conn
-                    .prepareStatement("INSERT INTO Clients (name, age) VALUES(?, ?)")) {
+                    .prepareStatement("INSERT INTO Clients (client_name, age) VALUES(?, ?)")) {
                 st.setString(1, name);
                 st.setInt(2, age);
                 st.executeUpdate();

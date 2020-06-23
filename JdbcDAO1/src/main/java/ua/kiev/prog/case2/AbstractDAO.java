@@ -1,5 +1,7 @@
 package ua.kiev.prog.case2;
 
+import ua.kiev.prog.shared.Client;
+import ua.kiev.prog.shared.Column;
 import ua.kiev.prog.shared.Id;
 
 import java.lang.reflect.Field;
@@ -25,8 +27,13 @@ public abstract class AbstractDAO<K, T> {
 
             for (Field f : fields) {
                 f.setAccessible(true);
+                if (f.isAnnotationPresent(Column.class)) {
+                    names.append(f.getAnnotation(Column.class).realName()).append(',');
+                } else {
+                    names.append(f.getName()).append(',');
+                }
 
-                names.append(f.getName()).append(',');
+
                 values.append('"').append(f.get(t)).append("\",");
             }
             names.deleteCharAt(names.length() - 1); // last ','
@@ -112,18 +119,20 @@ public abstract class AbstractDAO<K, T> {
         }
     }
 
-    public List<T> getAll(Class<T> cls, String ... columns) {
+    public List<T> getAll(Class<T> cls, String... columns) {
         List<T> res = new ArrayList<>();
-        StringBuilder columnsNames = new StringBuilder() ;
-        if(columns.length!=0) {
-            for (String column: columns){
+        StringBuilder columnsNames = new StringBuilder();
+        if (columns.length != 0) {
+            for (String column : columns) {
+                column = checkAnotationColumns(column);
                 columnsNames.append(column + ",");
                 System.out.println("column = " + column);
             }
-            columnsNames.deleteCharAt(columnsNames.length()-1);
+            columnsNames.deleteCharAt(columnsNames.length() - 1);
         } else {
-            columnsNames.append("*");}
-        System.out.println("columnsNames = " + columnsNames.toString() );
+            columnsNames.append("*");
+        }
+        System.out.println("columnsNames = " + columnsNames.toString());
 
 
         try {
@@ -137,10 +146,16 @@ public abstract class AbstractDAO<K, T> {
 
                         for (int i = 1; i <= md.getColumnCount(); i++) {
                             String columnName = md.getColumnName(i);
+                            Field[] fields = t.getClass().getDeclaredFields();
+                            for (Field f : fields) {
+                                if (f.isAnnotationPresent(Column.class)) {
+                                    columnName = f.getName();
+                                }
+                            }
 
                             Field field = cls.getDeclaredField(columnName);
                             field.setAccessible(true);
-
+                            columnName = checkAnotationColumns(columnName);
                             field.set(t, rs.getObject(columnName));
                         }
 
@@ -153,6 +168,18 @@ public abstract class AbstractDAO<K, T> {
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    private String checkAnotationColumns(String column) {
+        Client c = new Client();
+        Field[] fields = c.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(Column.class)) {
+                column = field.getAnnotation(Column.class).realName();
+                return column;
+            }
+        }
+        return column;
     }
 
     public void init() {
